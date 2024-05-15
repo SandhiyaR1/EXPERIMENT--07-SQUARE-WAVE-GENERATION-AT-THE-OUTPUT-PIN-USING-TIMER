@@ -85,9 +85,129 @@ Step14. click on debug and simulate using simulation as shown below
 
 ## STM 32 CUBE PROGRAM :
 ```
-HAL_TIM_Base_Start(&htim2);
-HAL_TIM_PWM_Init(&htim2);
-HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+#include "main.h"
+
+TIM_HandleTypeDef htim2;
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_TIM2_Init(void);
+int main(void)
+{
+  HAL_Init();
+
+  SystemClock_Config();
+
+  MX_GPIO_Init();
+  MX_TIM2_Init();
+
+  HAL_TIM_Base_Start(&htim2);
+  HAL_TIM_PWM_Init(&htim2);
+  HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+
+  while (1)
+  {
+  }
+
+}
+
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
+
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+static void MX_TIM2_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 1;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 10000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 7000;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+static void MX_GPIO_Init(void)
+{
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+}
+
+void Error_Handler(void)
+{
+  __disable_irq();
+  while (1)
+  {
+  }
+
+}
+
+#ifdef  USE_FULL_ASSERT
+
+void assert_failed(uint8_t *file, uint32_t line)
+{
+
+}
+#endif
 ```
 
 ## Output screen shots of proteus  :
@@ -99,36 +219,44 @@ HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
 
 
 ## DUTY CYCLE AND FREQUENCY CALCULATION 
-#### FOR PULSE AT 5000
-![322811844-ff40e5bb-6d52-4a01-861b-1c236d0bf4ff](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/2a4924a6-efad-4a3f-b36f-8402910239c7)
+#### FOR PULSE AT 50
+
+![321933788-5bccadbe-a182-4d07-a7e3-63e54c0bfd47](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/3b44ebec-8626-4c15-a05c-88372481e20c)
 
 ```
-TON = 2
-TOFF= 2
-TOTAL TIME = 4
-FREQUENCY = 1/(TOTAL TIME)
-FREQUENCY = 250Hz
+TON = 0.6ms
+
+TOFF= 0.6ms
+
+TOTAL TIME = 1.2ms
+
+FREQUENCY = 1/(1.2ms) = 833.33Hz
 ```
 
-#### FOR PULSE AT 7000
-![322811734-8f4ed4cd-9d00-429a-a9f3-c16dc0403a50](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/8c41acf2-da62-4fdd-af3f-d6e7f40afea9)
-```
-TON = 3
-TOFF= 1
-TOTAL TIME = 4
-FREQUENCY = 1/(TOTAL TIME)
-FREQUENCY = 250Hz
-```
-
-#### FOR PULSE AT 9000
-![322811310-e723309c-ba05-4084-9cca-730ba13f7928](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/51c9ce07-726a-4de1-835e-b0108c34d714)
+#### FOR PULSE AT 70
+![321934306-ac49d393-e7a6-48aa-904f-dc3a7555bcd6](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/b168b0a1-b877-4b6c-a668-0dd73e485a75)
 
 ```
-TON = 3.5
-TOFF=0.5
-TOTAL TIME = 4
-FREQUENCY = 1/(TOTAL TIME)
-FREQUENCY=250Hz
+TON = 0.84ms
+
+TOFF= 0.36
+
+TOTAL TIME = 1.2ms
+
+FREQUENCY = 1/(1.2ms) = 833.33Hz
+```
+
+#### FOR PULSE AT 90
+![321968889-4ca495c4-a7e4-4754-a48d-7afb0522e7aa](https://github.com/SandhiyaR1/EXPERIMENT--07-SQUARE-WAVE-GENERATION-AT-THE-OUTPUT-PIN-USING-TIMER/assets/113497571/c14384ea-ac5b-4d7f-bc62-b1af08a8414b)
+
+```
+TON = 1.08ms
+
+TOFF= 0.12ms
+
+TOTAL TIME = 1.2ms
+
+FREQUENCY = 1/(1.2ms) = 833.33Hz
 ```
 
 
